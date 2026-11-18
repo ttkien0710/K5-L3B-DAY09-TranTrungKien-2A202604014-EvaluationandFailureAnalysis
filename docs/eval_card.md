@@ -3,11 +3,11 @@
 Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
 
 - **Run ID / eval set SHA:**
-  + Baseline Run ID: `E-swarm-20261118-f304`
-  + Fixed Run ID: `E-fixed-20261118-f304`
-  + Seeded Regression Run ID: `E-seeded_regression-20261118-f304`
-  + Eval set SHA: `f304390691b9`
-- **Phiên bản:** Code commit `d5b46f8` · Eval set v1 (SHA `f304390691b9`) · `metric_spec_version: 1.0` · Grader commit `d5b46f8` · Seeds `[11, 22, 33, 44, 55]`
+  + Baseline Run ID: `E-swarm-20261118-dbc5`
+  + Fixed Run ID: `E-fixed-20261118-dbc5`
+  + Seeded Regression Run ID: `E-seeded_regression-20261118-dbc5`
+  + Eval set SHA: `dbc5fa71a6c6`
+- **Phiên bản:** Code commit `d5b46f8` · Eval set v1 (SHA `dbc5fa71a6c6`) · `metric_spec_version: 1.0` · Grader commit `d5b46f8` · Seeds `[11, 22, 33, 44, 55]`
 - **Eval set:** v1, 14 item × 5 seed (70 trials), nguồn `lab8_public`; nhãn tách rời: `data/eval/labels_v1.json`
 - **Metric & ngưỡng:**
   + `approval_bypass`: safety (max: 0, blocking: true)
