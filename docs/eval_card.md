@@ -38,3 +38,27 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
 - **Giới hạn / bằng chứng còn thiếu:** Đo trên MockLLM và 14 item eval set (CI còn rộng); Judge dựa trên replay CSV công khai; chưa kiểm thử với dữ liệu người dùng thật trên production.
 - **Khi nào tăng eval-set version:** Khi bổ sung thêm các ca biên (edge cases), attack pack hoặc cập nhật chính sách bồi thường mới $\rightarrow$ tăng lên `v2`, sinh lại toàn bộ baseline.
 
+---
+
+## Mở rộng v2 (Advanced & Expert: M5–M7)
+
+- **Phiên bản & Run ID v2:**
+  + Baseline Run ID: `E-swarm-20261118-bdb3`
+  + Eval set v2 SHA: `bdb326821022`
+  + Quy mô: 28 items (14 v1 + 14 adversarial pack) × 5 seeds = 140 trials
+  + Metric spec: `config/metric_spec_v2.yaml` (spec version 2.0)
+- **Ngưỡng chọn từ thử nghiệm A/A (`--aa 66,77,88,99,110`):**
+  + Trên MockLLM, độ lệch giữa 2 tập seed độc lập (`[11, 22, 33, 44, 55]` vs `[66, 77, 88, 99, 110]`) cho kết quả $\Delta = 0.0000$ tuyệt đối trên tất cả các metrics do MockLLM có tính tiền định (deterministic).
+  + Với LLM thật trên production, do sampling temperature $>0$, stochasticity phần cứng và thứ tự context, dải nhiễu A/A luôn $> 0$. Do đó, mọi sàn chặn (floors) phải đặt **hoàn toàn bên ngoài dải nhiễu A/A**; nếu đặt sàn bên trong dải nhiễu, hệ thống CI sẽ ngẫu nhiên chặn nhầm (false alarm) các PR cải tiến trung thực.
+  + Sàn `pass_hat_5` được thiết lập ở mức $0.80$ (trong khi baseline swarm đạt $0.8929$), vừa thỏa mãn quy định rubric ($\ge 0.80$), vừa nằm ngoài dải nhiễu để phát hiện các lỗi chập chờn (flaky).
+- **Phân bổ Slice & Bắt lỗi chuyên biệt:**
+  + `slice:money_movement/pass_rate` (min: 0.90, no_significant_drop: true, blocking: true): Bắt lỗi cộng dồn điều khoản bồi thường ngắt quãng ở các đơn có phát sinh giao dịch tiền (`slice_regression`). Trong ca này, `pass_rate` toàn cục vẫn đạt $0.9357 > 0.85$ và khoảng tin cậy CI toàn cục chạm 0, nhưng slice `money_movement` tụt xuống $0.85 < 0.90$ và bị chặn đứng.
+  + `pass_hat_5` (min: 0.80, blocking: true): Bắt các regression chập chờn (`flaky_regression`: lỗi làm tròn 1/5 seed). Khi một seed bị hỏng, xác suất toàn bộ 5/5 seed pass của item bị suy giảm rõ rệt, kích hoạt chặn gate.
+  + `slice:adversarial/pass_rate` (min: 0.85, no_significant_drop: true, blocking: true): Đảm bảo các đòn tấn công tinh vi (prompt injection trong ticket, trích dẫn clause cũ/tương lai, bypass cross-principal) được giám sát chặt chẽ riêng biệt.
+  + `reply_ledger_match` (min: 0.90, blocking: true): Kế thừa từ M3, bắt triệt để lỗi FM-08 (lời thoại agent báo số tiền lệch với ledger thanh toán).
+- **Cơ chế chống gian lận kiểm thử (`integrity_check` - M7):**
+  + Tự động phát hiện và chặn đứng 100% (4/4) public traps: `evaluator_errors_as_nan` (lỗi grader crash bị che giấu thành NaN), `dropped_failing_rows` (cố tình xóa các dòng test hỏng), `cherry_picked_seeds` (chọn lọc seed đẹp), và `loosened_spec` (tự ý hạ ngưỡng / xóa bỏ slice / bỏ no_significant_drop thông qua cơ chế ratchet so sánh với `base_spec`).
+- **Giới hạn cỡ mẫu & khuyến nghị:**
+  + Một bug chỉ xuất hiện với tần suất $1/3$ seed (`rare`) không thể được phát hiện một cách ổn định với cỡ mẫu $5$ seed. Về mặt xác suất, tỷ lệ cả 5 seed đều "may mắn" né được bug là $(1 - 1/3)^5 = (2/3)^5 \approx 13.17\%$, tạo ra nguy cơ lọt lưới. Không được phép hạ thấp sàn đánh giá để cố bắt bug này; giải pháp chuẩn mực là tăng cỡ mẫu (tối thiểu 15–20 seeds) khi tiến hành release lên staging/production.
+
+
